@@ -1,0 +1,17 @@
+name: covid
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pandas>=2.0.0
+  - matplotlib>=3.7.0
+  - seaborn>=0.12.0
+  - openpyxl>=3.1.0   # for Excel file support
+  - tk                # ensures Tkinter is available
+  # Optional (uncomment if you want maps)
+  # - geopandas>=0.13.0
+  # - shapely
+  # - fiona
+  # - pyproj
+  # - rtree
