@@ -80,15 +80,13 @@ docs/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/covid-analysis-app.git
+git clone https://github.com/your-username/covid-dataset-analysis.git
 cd covid-analysis-app
 
-# 2. (Optional) Create a virtual environment
-python -m venv venv
-source venv/bin/activate   # Linux/Mac
-venv\Scripts\activate      # Windows
+# 2. (Recommended) Create a virtual environment
+conda env create -f environment.yml
 
-# 3. Install dependencies
+# 3. Install dependencies universal (Optional bt)
 pip install -r requirements.txt
 
 # 4. Run the application
@@ -100,12 +98,13 @@ python main.py
 ## 📝 How to Use
 
 1. **Upload** your dataset (CSV or Excel)
-2. **Select** country/state from the dropdown
+2. **Select** country/state and other options from the dropdown
 3. **Choose** analysis type:
 	- Daily/Weekly Cases
 	- Recovery vs Death
 	- Case Distribution
 4. Click **Generate** to view chart
+5. Download Chart if Want
 
 ---
 

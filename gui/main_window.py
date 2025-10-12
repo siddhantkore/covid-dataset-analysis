@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-import data.cleaning_pipeline as cp
+# import data.cleaning_pipeline as cp
 
 # Configurable color palette and font
 COLOR_PALETTE = {
@@ -67,6 +67,21 @@ class MainWindow(tk.Tk):
 			btn.pack(fill=tk.X, pady=2)
 			self.sidebar_btns.append(btn)
 
+		# Floating toggle (always present but hidden when sidebar is visible)
+		self.floating_toggle = tk.Button(self, text="☰", font=("Segoe UI", 12), bg=COLOR_PALETTE['accent'], fg='white', bd=0, command=self._toggle_sidebar)
+		# Use relative placement so it stays visible on resize and above other widgets
+		self.floating_toggle.place(relx=0.0, rely=0.09, anchor='w')
+		self.floating_toggle.lift()
+		# Start visible only if sidebar is collapsed
+		if self.sidebar_expanded:
+			self.floating_toggle.place_forget()
+
+		# Reposition floating toggle on resize to ensure visibility
+		self.bind('<Configure>', self._on_window_configure)
+
+		# Keyboard shortcut to toggle sidebar
+		self.bind_all('<Control-b>', lambda e: self._toggle_sidebar())
+
 		# Right sidebar for controls
 		self.rightbar = tk.Frame(self, bg=COLOR_PALETTE['sidebar'], width=250)
 		self.rightbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -110,11 +125,30 @@ class MainWindow(tk.Tk):
 
 	def _toggle_sidebar(self):
 		if self.sidebar_expanded:
+			# hide the sidebar and show floating toggle
 			self.sidebar.pack_forget()
 			self.sidebar_expanded = False
+			# ensure floating toggle is placed and visible
+			self.floating_toggle.place(relx=0.0, rely=0.09, anchor='w')
+			self.floating_toggle.lift()
 		else:
-			self.sidebar.pack(side=tk.LEFT, fill=tk.Y)
+			# restore sidebar and hide floating toggle
+			# pack the sidebar before the main content so it stays on the left
+			try:
+				self.sidebar.pack(side=tk.LEFT, fill=tk.Y, before=self.content)
+			except Exception:
+				# fallback if 'before' fails in some Tk versions
+				self.sidebar.pack(side=tk.LEFT, fill=tk.Y)
 			self.sidebar_expanded = True
+			self.floating_toggle.place_forget()
+
+	def _on_window_configure(self, event):
+		# Keep floating toggle at top-left edge when visible
+		if not self.sidebar_expanded:
+			try:
+				self.floating_toggle.place_configure(relx=0.0, rely=0.09)
+			except Exception:
+				pass
 
 	def _clear_content(self):
 		for widget in self.content.winfo_children():
@@ -170,8 +204,8 @@ class MainWindow(tk.Tk):
 		file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
 		if file_path:
 			try:
-				# self.data = pd.read_csv(file_path)
-				self.data = cp.load_data_from_file(file_path)
+				self.data = pd.read_csv(file_path)
+				# self.data = cp.load_data_from_file(file_path)
 				if self.data == FileNotFoundError:
 					messagebox.showerror("Error", f"Failed to load file: {e}")
 				# Extract dropdown options
