@@ -5,6 +5,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+import data.cleaning_pipeline as cp
+
 # Configurable color palette and font
 COLOR_PALETTE = {
 	'bg': '#f5f6fa',
@@ -168,9 +170,14 @@ class MainWindow(tk.Tk):
 		file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
 		if file_path:
 			try:
-				self.data = pd.read_csv(file_path)
+				# self.data = pd.read_csv(file_path)
+				self.data = cp.load_data_from_file(file_path)
+				if self.data == FileNotFoundError:
+					messagebox.showerror("Error", f"Failed to load file: {e}")
 				# Extract dropdown options
 				self.state_menu['values'] = sorted(self.data['Region'].unique())
+				self.data['Month'] = pd.to_datetime(self.data['Date'], format='mixed').dt.month
+				self.data['Year'] = pd.to_datetime(self.data['Date'], format='mixed').dt.year
 				self.month_menu['values'] = sorted(self.data['Month'].unique()) if 'Month' in self.data else []
 				self.year_menu['values'] = sorted(self.data['Year'].unique()) if 'Year' in self.data else []
 				self.state_var.set(self.state_menu['values'][0] if self.state_menu['values'] else "")
