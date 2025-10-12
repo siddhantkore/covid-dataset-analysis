@@ -51,6 +51,15 @@ covid_analysis_app/
 ├── main.py              # Entry point
 ├── gui/                 # Tkinter GUI components
 ├── data/                # Data loading & processing
+docs/
+├── Makefile              # Build commands for Unix/Mac
+├── make.bat              # Build commands for Windows
+├── source/
+│   ├── conf.py           # Sphinx configuration
+│   ├── index.rst         # Main documentation entry point
+│   ├── modules.rst       # Auto-generated module list
+│   └── _static/          # Custom CSS, JS, or assets
+└── build/                # Auto-generated HTML (ignored in Git)
 ├── analysis/            # Chart generation modules
 ├── utils/               # Helpers (validators, chart embedding)
 ├── assets/              # Sample dataset, icons

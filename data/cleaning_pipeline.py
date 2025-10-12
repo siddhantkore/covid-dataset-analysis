@@ -1,30 +1,42 @@
 
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import openpyxl
 
-"""
-    This function validates the dataset by analyzing
-    and ensuring all the required fields are present or not
-    :param df: DataFrame
-    :return: 'True' if dataset is valid else 'False' 
-"""
+
 def is_valid_dataset(df):
+    """
+        This function validates the dataset by analyzing
+        and ensuring all the required fields are present or not
+        
+        Args:
+            df: DataFrame
+
+        Returns:
+            'True' if dataset is valid else 'False'
+        Example:
+            >>> import pandas as pd
+            >>> df = pd.DataFrame({'Date': [], 'Region': [], 'Death': [], 'Active Cases': [], 'Recovered': []})
+            >>> is_valid_dataset(df)
+            True
+    """
     df_columns = df.columns
-    if df_columns.contains(['Date', 'Region', 'Death', 'Active Cases', 'Recovered']):
-        return True
-    return False
+    required_columns = {'Date', 'Region', 'Death', 'Active Cases', 'Recovered'}
+    return required_columns.issubset(df.columns)
 
 
-"""
-    This method identifies the file extension such as .csv .xlsx etc.
-    By slicing the given path by dot
-    :param path: path of the csv or excel file
-    :return: the extension of file
-"""
 def slice_by_last_dot(path):
+    """
+        This method identifies the file extension such as .csv .xlsx etc.
+        By slicing the given path by dot
+        
+        Args:
+            path: path of the csv or excel file
+        
+        Returns:
+            the extension of file
+    """
     last_dot_index = path.rfind('.')
     
     if last_dot_index == -1:
@@ -33,30 +45,36 @@ def slice_by_last_dot(path):
         return path[last_dot_index:]
 
 
-""" 
-    This method cleans the data by 
-        - Treaming leading and back spaces
-        - Standardize the field i.e Date
-        - Add Columns such as Day, Month, Year by extracting it from Date
-        - Identify and delete NaN or missing value rows
-    :param df: DataFrame for cleaning
-    :return: cleaned DataFrame
-"""
 def clean_data(df):
+    """ 
+        This method cleans the data by 
+            - Treaming leading and back spaces
+            - Standardize the field i.e Date
+            - Add Columns such as Day, Month, Year by extracting it from Date
+            - Identify and delete NaN or missing value rows
+
+        Args:
+            df: DataFrame for cleaning
+        
+        Returns:
+            cleaned DataFrame
+    """
     pass
 
 
-""" 
-    This function loads the data from file
-    take help of functions such as
-        - is_valid_dataset(df)
-        - slice_by_last_dot(df)
-        - clean_data(df)
-    :param path: path of uploaded file
-    :return: DataFrame for graph generation
-"""
 def load_data_from_file(path):
-   
+    """ 
+        This function loads the data from file take help of functions such as
+            - is_valid_dataset(df)
+            - slice_by_last_dot(df)
+            - clean_data(df)
+
+        Args:    
+            path: path of uploaded file
+        
+        Returns:    
+            DataFrame for graph generation
+    """   
     file_extension = slice_by_last_dot(path)
     print(file_extension)
     print(path)
@@ -97,6 +115,6 @@ def load_data_from_file(path):
 
 ## Test
 def main():
-    abc('assets/sample_data.csv')
+    load_data_from_file('../assets/sample_data.csv')
 
 main()

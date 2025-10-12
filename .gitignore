@@ -48,3 +48,6 @@ pytest_cache/
 
 # App-specific (optional)
 assets/icons/*.DS_Store
+
+# Sphinx build output
+docs/build/
