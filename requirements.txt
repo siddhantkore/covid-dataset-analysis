@@ -4,3 +4,5 @@ seaborn>=0.12.0
 openpyxl>=3.1.0   # for Excel file support
 # Optional, only if you want map-based visualizations:
 # geopandas>=0.13.0
+sphinx>=7.2.0
+sphinx_book_theme>=1.1.0

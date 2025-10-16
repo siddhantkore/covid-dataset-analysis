@@ -4,6 +4,15 @@ from tkinter.font import Font
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import os
+import sys
+
+# Make sure the project root is on sys.path so local packages (analysis, data, etc.) can be imported
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+	sys.path.insert(0, PROJECT_ROOT)
+
+from analysis.trends import create_figure
 
 # import data.cleaning_pipeline as cp
 
@@ -21,6 +30,22 @@ TITLE_FONT = ("Segoe UI", 16, "bold")
 
 
 class MainWindow(tk.Tk):
+	"""Main application window for the COVID-19 Dataset Analyzer.
+
+	This class builds the main layout: a top heading bar, a left toggleable
+	sidebar, a right controls sidebar, and the main content area which hosts
+	the dashboard graph and data table. It is intentionally GUI-only; plotting
+	logic is delegated to `analysis.trends.create_figure`.
+
+	Attributes
+	----------
+	data : pandas.DataFrame | None
+		Currently loaded dataset (None until a CSV is uploaded).
+	current_tab : tkinter.StringVar
+		Tracks the current selected tab (Dashboard/Data/About Us).
+	... (other UI state variables)
+
+	"""
 	def __init__(self):
 		super().__init__()
 		self.title("COVID-19 Dataset Analyzer")
@@ -41,6 +66,16 @@ class MainWindow(tk.Tk):
 		self._show_dashboard()
 
 	def _build_layout(self):
+		"""Construct all UI elements and layout frames.
+
+		Creates the heading bar, left sidebar (with toggle), floating toggle
+		handle, right controls sidebar, and main content frame. This method
+		does not populate dynamic data; that occurs when a CSV is uploaded.
+
+		Returns
+		-------
+		None
+		"""
 		# Top heading bar
 		heading = tk.Frame(self, bg=COLOR_PALETTE['accent'], height=60)
 		heading.pack(side=tk.TOP, fill=tk.X)
@@ -113,6 +148,24 @@ class MainWindow(tk.Tk):
 		self.content.grid_columnconfigure(0, weight=1)
 
 	def _add_rightbar_option(self, label, var, menu_attr, values=None):
+		"""Add a labeled Combobox to the right controls sidebar.
+
+		Parameters
+		----------
+		label : str
+			Label text displayed to the left of the combobox.
+		var : tkinter.Variable
+			Variable bound to the combobox selection.
+		menu_attr : str
+			Attribute name to assign the created Combobox to (e.g. 'state_menu').
+		values : list[str] | None
+			Optional list of values to populate the Combobox. If None, an empty
+			combobox is created and values should be set later when data is loaded.
+
+		Returns
+		-------
+		None
+		"""
 		frame = tk.Frame(self.rightbar, bg=COLOR_PALETTE['sidebar'])
 		frame.pack(fill=tk.X, padx=10, pady=2)
 		tk.Label(frame, text=label, font=APP_FONT, bg=COLOR_PALETTE['sidebar'], fg='white').pack(side=tk.LEFT)
@@ -124,6 +177,18 @@ class MainWindow(tk.Tk):
 		setattr(self, menu_attr, menu)
 
 	def _toggle_sidebar(self):
+		"""Toggle the visibility of the left sidebar.
+
+		When collapsing the sidebar a floating toggle button is shown on the
+		left edge so the user can reopen the sidebar. When expanding the
+		sidebar the floating handle is hidden.
+
+		This method updates ``self.sidebar_expanded`` accordingly.
+
+		Returns
+		-------
+		None
+		"""
 		if self.sidebar_expanded:
 			# hide the sidebar and show floating toggle
 			self.sidebar.pack_forget()
@@ -143,6 +208,20 @@ class MainWindow(tk.Tk):
 			self.floating_toggle.place_forget()
 
 	def _on_window_configure(self, event):
+		"""Handle window resize/configure events.
+
+		This ensures the floating toggle stays positioned correctly when the
+		window is resized.
+
+		Parameters
+		----------
+		event : tkinter.Event
+			The configure event object (passed from Tk).
+
+		Returns
+		-------
+		None
+		"""
 		# Keep floating toggle at top-left edge when visible
 		if not self.sidebar_expanded:
 			try:
@@ -151,10 +230,28 @@ class MainWindow(tk.Tk):
 				pass
 
 	def _clear_content(self):
+		"""Remove all widgets from the main content frame.
+
+		Used when switching tabs to destroy previous tab widgets and free
+		space for the new content.
+
+		Returns
+		-------
+		None
+		"""
 		for widget in self.content.winfo_children():
 			widget.destroy()
 
 	def _on_tab_change(self):
+		"""Callback when the selected sidebar tab changes.
+
+		Reads ``self.current_tab`` and displays the corresponding content
+		by calling ``_show_dashboard``, ``_show_data`` or ``_show_about``.
+
+		Returns
+		-------
+		None
+		"""
 		tab = self.current_tab.get()
 		if tab == "Dashboard":
 			self._show_dashboard()
@@ -164,6 +261,16 @@ class MainWindow(tk.Tk):
 			self._show_about()
 
 	def _show_dashboard(self):
+		"""Build and display the dashboard view (graph canvas).
+
+		The dashboard contains a frame where the current figure (created by
+		``analysis.trends.create_figure``) is embedded. Dropdowns on the right
+		sidebar are bound to update the graph automatically.
+
+		Returns
+		-------
+		None
+		"""
 		self._clear_content()
 		# Canvas for graph
 		self.graph_frame = tk.Frame(self.content, bg=COLOR_PALETTE['canvas_bg'], bd=2, relief=tk.RIDGE)
@@ -176,6 +283,15 @@ class MainWindow(tk.Tk):
 			var.trace_add('write', lambda *args: self._update_graph())
 
 	def _show_data(self):
+		"""Show the raw data in a table view.
+
+		If no data is loaded a message is displayed. For a loaded DataFrame a
+		``ttk.Treeview`` is populated with rows from ``self.data``.
+
+		Returns
+		-------
+		None
+		"""
 		self._clear_content()
 		tk.Label(self.content, text="Data Table", font=TITLE_FONT, bg=COLOR_PALETTE['bg'], fg=COLOR_PALETTE['text']).pack(anchor="w", padx=20, pady=(20, 5))
 		if self.data is not None:
@@ -193,6 +309,12 @@ class MainWindow(tk.Tk):
 			tk.Label(self.content, text="No data loaded.", font=APP_FONT, bg=COLOR_PALETTE['bg'], fg='red').pack(pady=30)
 
 	def _show_about(self):
+		"""Display the About view with project/author information.
+
+		Returns
+		-------
+		None
+		"""
 		self._clear_content()
 		about = tk.Frame(self.content, bg=COLOR_PALETTE['bg'])
 		about.pack(fill=tk.BOTH, expand=True, padx=40, pady=40)
@@ -201,65 +323,113 @@ class MainWindow(tk.Tk):
 				 font=APP_FONT, bg=COLOR_PALETTE['bg'], fg=COLOR_PALETTE['text'], justify="left").pack(anchor="w", pady=10)
 
 	def _upload_file(self):
+		"""Prompt the user to select a CSV file and load it into ``self.data``.
+
+		This method:
+
+		- Opens a file dialog filtered to CSV files.
+		- Loads the CSV into a pandas DataFrame and stores it in ``self.data``.
+		- Derives ``Month`` and ``Year`` columns from the parsed ``Date`` column.
+		- Populates the right sidebar comboboxes with available options.
+
+		Errors during loading are presented to the user via a messagebox.
+
+		Returns
+		-------
+		None
+		"""
 		file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
 		if file_path:
 			try:
+				# Load CSV into DataFrame
 				self.data = pd.read_csv(file_path)
-				# self.data = cp.load_data_from_file(file_path)
-				if self.data == FileNotFoundError:
-					messagebox.showerror("Error", f"Failed to load file: {e}")
-				# Extract dropdown options
-				self.state_menu['values'] = sorted(self.data['Region'].unique())
-				self.data['Month'] = pd.to_datetime(self.data['Date'], format='mixed').dt.month
-				self.data['Year'] = pd.to_datetime(self.data['Date'], format='mixed').dt.year
-				self.month_menu['values'] = sorted(self.data['Month'].unique()) if 'Month' in self.data else []
-				self.year_menu['values'] = sorted(self.data['Year'].unique()) if 'Year' in self.data else []
-				self.state_var.set(self.state_menu['values'][0] if self.state_menu['values'] else "")
-				self.month_var.set(self.month_menu['values'][0] if self.month_menu['values'] else "")
-				self.year_var.set(self.year_menu['values'][0] if self.year_menu['values'] else "")
+				# Basic validation: ensure required columns exist
+				required = {'Date', 'Region'}
+				missing = required - set(self.data.columns)
+				if missing:
+					messagebox.showerror("Error", f"CSV missing required columns: {', '.join(missing)}")
+					return
+				# Parse dates safely and create Year/Month columns
+				self.data['Date'] = pd.to_datetime(self.data['Date'], errors='coerce')
+				if self.data['Date'].isna().all():
+					messagebox.showerror("Error", "Failed to parse any dates from the 'Date' column.")
+					return
+				self.data['Month'] = self.data['Date'].dt.month
+				self.data['Year'] = self.data['Date'].dt.year
+				# Populate combobox options (guard against missing columns)
+				self.state_menu['values'] = sorted(self.data['Region'].dropna().unique())
+				# Normalize combobox values to strings to avoid float-like values (e.g. '1.0')
+				months = sorted(self.data['Month'].dropna().unique())
+				years = sorted(self.data['Year'].dropna().unique())
+				self.month_menu['values'] = [str(int(m)) for m in months]
+				self.year_menu['values'] = [str(int(y)) for y in years]
+				# Set defaults if possible
+				if len(self.state_menu['values']):
+					self.state_var.set(self.state_menu['values'][0])
+				if len(self.month_menu['values']):
+					self.month_var.set(self.month_menu['values'][0])
+				if len(self.year_menu['values']):
+					self.year_var.set(self.year_menu['values'][0])
+				# Update graph
 				self._update_graph()
 				messagebox.showinfo("Success", "Data loaded successfully!")
 			except Exception as e:
 				messagebox.showerror("Error", f"Failed to load file: {e}")
 
 	def _update_graph(self):
+		"""Generate and embed a matplotlib Figure for the current selection.
+
+		This method reads selection values (state/month/year/case/graph type),
+		calls ``analysis.trends.create_figure`` and embeds the returned Figure
+		inside the dashboard canvas. Errors are shown inline in the canvas.
+
+		Returns
+		-------
+		None
+		"""
 		for widget in self.graph_frame.winfo_children():
 			widget.destroy()
-		if self.data is None or not all(col in self.data for col in ['Region', 'Month', 'Year', self.case_type_var.get()]):
-			tk.Label(self.graph_frame, text="No data or missing columns.", font=APP_FONT, bg=COLOR_PALETTE['canvas_bg'], fg='red').pack(expand=True)
+		if self.data is None:
+			# No data loaded yet
+			tk.Label(self.graph_frame, text="No data loaded.", font=APP_FONT, bg=COLOR_PALETTE['canvas_bg'], fg='red').pack(expand=True)
 			return
-		# Filter data
-		df = self.data.copy()
-		if self.state_var.get():
-			df = df[df['Region'] == self.state_var.get()]
+		# Prepare plotting parameters
+		state = self.state_var.get() or None
+		# Parse month/year robustly (handle values like '1.0')
+		month = None
 		if self.month_var.get():
-			df = df[df['Month'] == int(self.month_var.get())]
+			try:
+				month = int(float(self.month_var.get()))
+			except Exception:
+				month = None
+		year = None
 		if self.year_var.get():
-			df = df[df['Year'] == int(self.year_var.get())]
-		if df.empty:
-			tk.Label(self.graph_frame, text="No data for selected criteria.", font=APP_FONT, bg=COLOR_PALETTE['canvas_bg'], fg='red').pack(expand=True)
+			try:
+				year = int(float(self.year_var.get()))
+			except Exception:
+				year = None
+		case_type = self.case_type_var.get()
+		graph_type = self.graph_type_var.get()
+		try:
+			fig = create_figure(self.data, state=state, month=month, year=year, case_type=case_type, graph_type=graph_type, palette=COLOR_PALETTE)
+		except Exception as e:
+			tk.Label(self.graph_frame, text=f"Error: {e}", font=APP_FONT, bg=COLOR_PALETTE['canvas_bg'], fg='red').pack(expand=True)
 			return
-		# Plot
-		fig, ax = plt.subplots(figsize=(7, 4), dpi=100)
-		graph_type = self.graph_type_var.get().lower()
-		x = 'Month' if self.month_var.get() else 'Year'
-		y = self.case_type_var.get()
-		if graph_type == 'line':
-			ax.plot(df[x], df[y], marker='o', color=COLOR_PALETTE['accent'])
-		elif graph_type == 'bar':
-			ax.bar(df[x], df[y], color=COLOR_PALETTE['accent'])
-		elif graph_type == 'scatter':
-			ax.scatter(df[x], df[y], color=COLOR_PALETTE['accent'])
-		ax.set_xlabel(x, fontname=APP_FONT[0])
-		ax.set_ylabel(y, fontname=APP_FONT[0])
-		ax.set_title(f"{y} by {x}", fontname=APP_FONT[0], fontsize=14)
-		fig.tight_layout()
 		canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
 		canvas.draw()
 		canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 		self.current_figure = fig
 
 	def _download_graph(self):
+		"""Save the current figure to disk (PNG or PDF).
+
+		Opens a save dialog and uses ``Figure.savefig`` to write the selected
+		format. If no current figure is available a warning is shown.
+
+		Returns
+		-------
+		None
+		"""
 		if not hasattr(self, 'current_figure') or self.current_figure is None:
 			messagebox.showwarning("No Graph", "No graph to download.")
 			return
