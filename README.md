@@ -71,7 +71,35 @@ docs/
 
 <div align="center">
 <h3>🖥️ Screenshots</h3>
-<em>(Add your screenshots here)</em>
+
+<p align="center">
+	<img src="assets/screenshots/Screenshot from 2025-10-28 02-10-11.png" alt="App screenshot 1" width="680" />
+</p>
+
+<p align="center">
+	<img src="assets/screenshots/Screenshot from 2025-10-28 02-12-31.png" alt="App screenshot 2" width="680" />
+</p>
+
+<p align="center">
+	<img src="assets/screenshots/Screenshot from 2025-10-28 02-13-15.png" alt="App screenshot 3" width="680" />
+</p>
+
+<p align="center">
+	<img src="assets/screenshots/Screenshot from 2025-10-28 02-14-22.png" alt="App screenshot 4" width="680" />
+</p>
+
+<p align="center">
+	<img src="assets/screenshots/Screenshot from 2025-10-28 02-14-51.png" alt="App screenshot 5" width="680" />
+</p>
+
+<p align="center">
+	<img src="assets/screenshots/Screenshot from 2025-10-28 02-15-48.png" alt="App screenshot 6" width="680" />
+</p>
+
+<p align="center">
+	<img src="assets/screenshots/Screenshot from 2025-10-28 02-16-29.png" alt="App screenshot 7" width="680" />
+</p>
+
 </div>
 
 ---
