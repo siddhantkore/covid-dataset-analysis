@@ -19,7 +19,9 @@
 </div>
 
 ---
+### [Understand taken Covid-19 Dataset Completely (Click Here)](sandbox/cleaning.ipynb)
 
+---
 ## 🚀 Features
 
 - 📁 Upload CSV or Excel datasets
