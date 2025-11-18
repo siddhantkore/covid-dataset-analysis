@@ -1,0 +1,10 @@
+// open the docs in browser
+
+open docs/build/html/index.html
+
+
+
+// to cover changes
+cd docs
+
+make html

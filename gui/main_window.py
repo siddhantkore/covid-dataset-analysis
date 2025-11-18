@@ -6,44 +6,68 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
 import sys
-
 # Make sure the project root is on sys.path so local packages (analysis, data, etc.) can be imported
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
-	sys.path.insert(0, PROJECT_ROOT)
+    sys.path.insert(0, PROJECT_ROOT)
 
+# Import local modules using absolute imports (project root is on sys.path)
+from data import cleaning_pipeline as cp
 from analysis.trends import create_figure
 
-# import data.cleaning_pipeline as cp
-
 # Configurable color palette and font
+# COLOR_PALETTE = {
+# 	'bg': '#f5f6fa',
+# 	'sidebar': '#273c75',
+# 	'sidebar_active': '#40739e',
+# 	'accent': '#00a8ff',
+# 	'canvas_bg': '#ffffff',
+# 	'text': '#353b48',
+# }
+# COLOR_PALETTE = {
+#     'bg': '#f8f9fa',
+#     'sidebar': '#212529',
+#     'sidebar_active': '#007bff',
+#     'accent': '#28a745',
+#     'canvas_bg': '#ffffff',
+#     'text': '#343a40',
+# }
+# COLOR_PALETTE = {
+#     'bg': '#e9ecef',
+#     'sidebar': '#1a535c',
+#     'sidebar_active': '#4ecdc4',
+#     'accent': '#ff6b6b',
+#     'canvas_bg': '#ffffff',
+#     'text': '#495057',
+# }
 COLOR_PALETTE = {
-	'bg': '#f5f6fa',
-	'sidebar': '#273c75',
-	'sidebar_active': '#40739e',
-	'accent': '#00a8ff',
-	'canvas_bg': '#ffffff',
-	'text': '#353b48',
+    'bg': '#f1f3f5',
+    'sidebar': '#343a40',
+    'sidebar_active': '#6c757d',
+    'accent': "#b55a1a",
+    'canvas_bg': '#ffffff',
+    'text': '#212529',
 }
-APP_FONT = ("Segoe UI", 11)
-TITLE_FONT = ("Segoe UI", 16, "bold")
+APP_FONT = ("Sans-Serif", 11, "bold")
+TITLE_FONT = ("Sans-Serif", 16, "bold")
 
 
 class MainWindow(tk.Tk):
-	"""Main application window for the COVID-19 Dataset Analyzer.
+	"""
+		Main application window for the COVID-19 Dataset Analyzer.
 
-	This class builds the main layout: a top heading bar, a left toggleable
-	sidebar, a right controls sidebar, and the main content area which hosts
-	the dashboard graph and data table. It is intentionally GUI-only; plotting
-	logic is delegated to `analysis.trends.create_figure`.
+		This class builds the main layout: a top heading bar, a left toggleable
+		sidebar, a right controls sidebar, and the main content area which hosts
+		the dashboard graph and data table. It is intentionally GUI-only; plotting
+		logic is delegated to `analysis.trends.create_figure`.
 
-	Attributes
-	----------
-	data : pandas.DataFrame | None
-		Currently loaded dataset (None until a CSV is uploaded).
-	current_tab : tkinter.StringVar
-		Tracks the current selected tab (Dashboard/Data/About Us).
-	... (other UI state variables)
+		Attributes
+		----------
+		data : pandas.DataFrame | None
+			Currently loaded dataset (None until a CSV is uploaded).
+		current_tab : tkinter.StringVar
+			Tracks the current selected tab (Dashboard/Data/About Us).
+		... (other UI state variables)
 
 	"""
 	def __init__(self):
@@ -66,28 +90,29 @@ class MainWindow(tk.Tk):
 		self._show_dashboard()
 
 	def _build_layout(self):
-		"""Construct all UI elements and layout frames.
-
-		Creates the heading bar, left sidebar (with toggle), floating toggle
-		handle, right controls sidebar, and main content frame. This method
-		does not populate dynamic data; that occurs when a CSV is uploaded.
-
-		Returns
-		-------
-		None
 		"""
-		# Top heading bar
+			Construct all UI elements and layout frames.
+
+			Creates the heading bar, left sidebar (with toggle), floating toggle
+			handle, right controls sidebar, and main content frame. This method
+			does not populate dynamic data; that occurs when a CSV is uploaded.
+
+			Returns
+
+			None
+		"""
 		heading = tk.Frame(self, bg=COLOR_PALETTE['accent'], height=60)
 		heading.pack(side=tk.TOP, fill=tk.X)
 		heading.pack_propagate(False)
 		tk.Label(heading, text="Covid-19 Data Analysis", font=TITLE_FONT, bg=COLOR_PALETTE['accent'], fg='white').pack(side=tk.LEFT, padx=30, pady=10)
 
-		# Left sidebar (toggleable)
-		self.sidebar = tk.Frame(self, bg=COLOR_PALETTE['sidebar'], width=180)
+		# Left sidebar can be collapsed/expanded
+		self.sidebar = tk.Frame(self, bg=COLOR_PALETTE['sidebar'], width=180, padx=4, pady=4)
 		self.sidebar.pack(side=tk.LEFT, fill=tk.Y)
 		self.sidebar.pack_propagate(False)
 
-		toggle_btn = tk.Button(self.sidebar, text="☰", font=("Segoe UI", 16), bg=COLOR_PALETTE['sidebar'], fg='white', bd=0, activebackground=COLOR_PALETTE['sidebar_active'], command=self._toggle_sidebar)
+		# Sidebar toggle button
+		toggle_btn = tk.Button(self.sidebar, text="☰", font=("Sans-Serif", 16), bg=COLOR_PALETTE['sidebar'], fg='white', bd=0, activebackground=COLOR_PALETTE['sidebar_active'], command=self._toggle_sidebar)
 		toggle_btn.pack(anchor="nw", padx=8, pady=8)
 
 		self.sidebar_btns = []
@@ -97,16 +122,17 @@ class MainWindow(tk.Tk):
 				indicatoron=False, width=18, pady=15, font=APP_FONT,
 				bg=COLOR_PALETTE['sidebar'], fg='white', selectcolor=COLOR_PALETTE['sidebar_active'],
 				activebackground=COLOR_PALETTE['sidebar_active'], activeforeground='white',
-				command=self._on_tab_change
-			)
+				command=self._on_tab_change)
+			
 			btn.pack(fill=tk.X, pady=2)
 			self.sidebar_btns.append(btn)
 
-		# Floating toggle (always present but hidden when sidebar is visible)
+		# Floating toggle handle when sidebar is collapsed
 		self.floating_toggle = tk.Button(self, text="☰", font=("Segoe UI", 12), bg=COLOR_PALETTE['accent'], fg='white', bd=0, command=self._toggle_sidebar)
 		# Use relative placement so it stays visible on resize and above other widgets
 		self.floating_toggle.place(relx=0.0, rely=0.09, anchor='w')
 		self.floating_toggle.lift()
+
 		# Start visible only if sidebar is collapsed
 		if self.sidebar_expanded:
 			self.floating_toggle.place_forget()
@@ -117,18 +143,18 @@ class MainWindow(tk.Tk):
 		# Keyboard shortcut to toggle sidebar
 		self.bind_all('<Control-b>', lambda e: self._toggle_sidebar())
 
-		# Right sidebar for controls
+		# Right sidebar for controls and various other functionalities
 		self.rightbar = tk.Frame(self, bg=COLOR_PALETTE['sidebar'], width=250)
 		self.rightbar.pack(side=tk.RIGHT, fill=tk.Y)
 		self.rightbar.pack_propagate(False)
 
-		# Upload section
+		# Upload areato upload csv or xlsx files
 		upload_label = tk.Label(self.rightbar, text="Upload Data", font=APP_FONT, bg=COLOR_PALETTE['sidebar'], fg='white')
 		upload_label.pack(pady=(20, 5))
 		upload_btn = tk.Button(self.rightbar, text="Upload CSV", font=APP_FONT, bg=COLOR_PALETTE['accent'], fg='white', command=self._upload_file)
 		upload_btn.pack(pady=(0, 20))
 
-		# Filter controls
+		# Filter controls to analyze data using various filters 
 		filter_label = tk.Label(self.rightbar, text="Visualization Options", font=APP_FONT, bg=COLOR_PALETTE['sidebar'], fg='white')
 		filter_label.pack(pady=(10, 5))
 
@@ -141,30 +167,31 @@ class MainWindow(tk.Tk):
 		download_btn = tk.Button(self.rightbar, text="Download Graph", font=APP_FONT, bg=COLOR_PALETTE['accent'], fg='white', command=self._download_graph)
 		download_btn.pack(pady=(20, 0))
 
-		# Main content area
+		# Main content area to display graph diagrams
 		self.content = tk.Frame(self, bg=COLOR_PALETTE['bg'])
 		self.content.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 		self.content.grid_rowconfigure(1, weight=1)
 		self.content.grid_columnconfigure(0, weight=1)
 
 	def _add_rightbar_option(self, label, var, menu_attr, values=None):
-		"""Add a labeled Combobox to the right controls sidebar.
+		"""
+			Add a labeled Combobox to the right controls sidebar.
 
-		Parameters
-		----------
-		label : str
-			Label text displayed to the left of the combobox.
-		var : tkinter.Variable
-			Variable bound to the combobox selection.
-		menu_attr : str
-			Attribute name to assign the created Combobox to (e.g. 'state_menu').
-		values : list[str] | None
-			Optional list of values to populate the Combobox. If None, an empty
-			combobox is created and values should be set later when data is loaded.
+			Parameters
+			----------
+			label : str
+				Label text displayed to the left of the combobox.
+			var : tkinter.Variable
+				Variable bound to the combobox selection.
+			menu_attr : str
+				Attribute name to assign the created Combobox to (e.g. 'state_menu').
+			values : list[str] | None
+				Optional list of values to populate the Combobox. If None, an empty
+				combobox is created and values should be set later when data is loaded.
 
-		Returns
-		-------
-		None
+			Returns
+			-------
+			None
 		"""
 		frame = tk.Frame(self.rightbar, bg=COLOR_PALETTE['sidebar'])
 		frame.pack(fill=tk.X, padx=10, pady=2)
@@ -177,52 +204,48 @@ class MainWindow(tk.Tk):
 		setattr(self, menu_attr, menu)
 
 	def _toggle_sidebar(self):
-		"""Toggle the visibility of the left sidebar.
+		"""
+			Toggle the visibility of the left sidebar.
 
-		When collapsing the sidebar a floating toggle button is shown on the
-		left edge so the user can reopen the sidebar. When expanding the
-		sidebar the floating handle is hidden.
+			When collapsing the sidebar a floating toggle button is shown on the
+			left edge so the user can reopen the sidebar. When expanding the
+			sidebar the floating handle is hidden.
 
-		This method updates ``self.sidebar_expanded`` accordingly.
+			This method updates ``self.sidebar_expanded`` accordingly.
 
-		Returns
-		-------
-		None
+			Returns
+			----------
+			None
 		"""
 		if self.sidebar_expanded:
-			# hide the sidebar and show floating toggle
 			self.sidebar.pack_forget()
 			self.sidebar_expanded = False
-			# ensure floating toggle is placed and visible
 			self.floating_toggle.place(relx=0.0, rely=0.09, anchor='w')
 			self.floating_toggle.lift()
 		else:
-			# restore sidebar and hide floating toggle
-			# pack the sidebar before the main content so it stays on the left
 			try:
 				self.sidebar.pack(side=tk.LEFT, fill=tk.Y, before=self.content)
 			except Exception:
-				# fallback if 'before' fails in some Tk versions
 				self.sidebar.pack(side=tk.LEFT, fill=tk.Y)
 			self.sidebar_expanded = True
 			self.floating_toggle.place_forget()
 
 	def _on_window_configure(self, event):
-		"""Handle window resize/configure events.
-
-		This ensures the floating toggle stays positioned correctly when the
-		window is resized.
-
-		Parameters
-		----------
-		event : tkinter.Event
-			The configure event object (passed from Tk).
-
-		Returns
-		-------
-		None
 		"""
-		# Keep floating toggle at top-left edge when visible
+			Handle window resize/configure events and other window confuguration operations
+
+			This ensures the floating toggle stays positioned correctly when the
+			window is resized.
+
+			Parameters
+			----------
+			event : tkinter.Event
+				Window configure event.
+
+			Returns
+			-------
+			None
+		"""
 		if not self.sidebar_expanded:
 			try:
 				self.floating_toggle.place_configure(relx=0.0, rely=0.09)
@@ -230,27 +253,29 @@ class MainWindow(tk.Tk):
 				pass
 
 	def _clear_content(self):
-		"""Remove all widgets from the main content frame.
+		"""
+			Remove all widgets from the main content frame
 
-		Used when switching tabs to destroy previous tab widgets and free
-		space for the new content.
+			Used when switching tabs to destroy previous tab widgets and free
+			space for the new content.
 
-		Returns
+			Returns
 		-------
-		None
+			None
 		"""
 		for widget in self.content.winfo_children():
 			widget.destroy()
 
 	def _on_tab_change(self):
-		"""Callback when the selected sidebar tab changes.
+		"""
+			Callback when the selected sidebar tab changes.
 
-		Reads ``self.current_tab`` and displays the corresponding content
-		by calling ``_show_dashboard``, ``_show_data`` or ``_show_about``.
+			Reads ``self.current_tab`` and displays the corresponding content
+			by calling ``_show_dashboard``, ``_show_data`` or ``_show_about``.
 
-		Returns
-		-------
-		None
+			Returns
+			-------
+			None
 		"""
 		tab = self.current_tab.get()
 		if tab == "Dashboard":
@@ -261,36 +286,38 @@ class MainWindow(tk.Tk):
 			self._show_about()
 
 	def _show_dashboard(self):
-		"""Build and display the dashboard view (graph canvas).
+		"""
+			Build and display the dashboard view
 
-		The dashboard contains a frame where the current figure (created by
-		``analysis.trends.create_figure``) is embedded. Dropdowns on the right
-		sidebar are bound to update the graph automatically.
+			The dashboard contains a frame where the current figure (created by
+			``analysis.trends.create_figure``) is embedded. Dropdowns on the right
+			sidebar are bound to update the graph automatically.
 
-		Returns
-		-------
-		None
+			Returns
+			-------
+			None
 		"""
 		self._clear_content()
-		# Canvas for graph
+		# Canvas to display graphs
 		self.graph_frame = tk.Frame(self.content, bg=COLOR_PALETTE['canvas_bg'], bd=2, relief=tk.RIDGE)
 		self.graph_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 		self.content.grid_rowconfigure(0, weight=1)
 		self.content.grid_columnconfigure(0, weight=1)
 
-		# Bind dropdowns to update graph
+		# dropdowns to update graph
 		for var in [self.state_var, self.month_var, self.year_var, self.case_type_var, self.graph_type_var]:
 			var.trace_add('write', lambda *args: self._update_graph())
 
 	def _show_data(self):
-		"""Show the raw data in a table view.
+		"""
+			Show the raw data in a table view and this will be displayed under data button of left sidebar.
 
-		If no data is loaded a message is displayed. For a loaded DataFrame a
-		``ttk.Treeview`` is populated with rows from ``self.data``.
+			If no data is loaded a message is displayed. For a loaded DataFrame a
+			``ttk.Treeview`` is populated with rows from ``self.data``.
 
-		Returns
-		-------
-		None
+			Returns
+			-------
+			None
 		"""
 		self._clear_content()
 		tk.Label(self.content, text="Data Table", font=TITLE_FONT, bg=COLOR_PALETTE['bg'], fg=COLOR_PALETTE['text']).pack(anchor="w", padx=20, pady=(20, 5))
@@ -299,9 +326,11 @@ class MainWindow(tk.Tk):
 			table_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 			cols = list(self.data.columns)
 			tree = ttk.Treeview(table_frame, columns=cols, show='headings')
+
 			for col in cols:
 				tree.heading(col, text=col)
 				tree.column(col, width=100, anchor='center')
+
 			for _, row in self.data.iterrows():
 				tree.insert('', 'end', values=list(row))
 			tree.pack(fill=tk.BOTH, expand=True)
@@ -309,53 +338,62 @@ class MainWindow(tk.Tk):
 			tk.Label(self.content, text="No data loaded.", font=APP_FONT, bg=COLOR_PALETTE['bg'], fg='red').pack(pady=30)
 
 	def _show_about(self):
-		"""Display the About view with project/author information.
+		"""
+			Display the About view for project info and Doc link.
 
-		Returns
-		-------
-		None
+			Returns
+			-------
+			None
 		"""
 		self._clear_content()
 		about = tk.Frame(self.content, bg=COLOR_PALETTE['bg'])
 		about.pack(fill=tk.BOTH, expand=True, padx=40, pady=40)
+
 		tk.Label(about, text="About Us", font=TITLE_FONT, bg=COLOR_PALETTE['bg'], fg=COLOR_PALETTE['text']).pack(anchor="w")
-		tk.Label(about, text="COVID-19 Dataset Analyzer\nDeveloped by Siddhant Kore\n\nFor documentation and more info, see the README.",
+		tk.Label(about, text="COVID-19 Dataset Analyzer\nDeveloped by Siddhant Kore\n\nFor documentation click here and more info, see the README.",
 				 font=APP_FONT, bg=COLOR_PALETTE['bg'], fg=COLOR_PALETTE['text'], justify="left").pack(anchor="w", pady=10)
 
 	def _upload_file(self):
-		"""Prompt the user to select a CSV file and load it into ``self.data``.
-
-		This method:
-
-		- Opens a file dialog filtered to CSV files.
-		- Loads the CSV into a pandas DataFrame and stores it in ``self.data``.
-		- Derives ``Month`` and ``Year`` columns from the parsed ``Date`` column.
-		- Populates the right sidebar comboboxes with available options.
-
-		Errors during loading are presented to the user via a messagebox.
-
-		Returns
-		-------
-		None
 		"""
-		file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
+			Prompt the user to select a CSV or excel file and load it into ``self.data``.
+
+			This method:
+
+			- Opens a file dialog filtered to CSV files
+			- Loads the CSV into a pandas DataFrame and stores it in ``self.data``.
+			- Derives ``Month`` and ``Year`` columns from the parsed ``Date`` column.
+			- Populates the right sidebar comboboxes with available options.
+
+			Errors during loading are presented to the user via a messagebox.
+
+			Takes help of:
+			- ``data.cleaning_pipeline.load_data_from_file``
+			- ``pandas.to_datetime``
+			- also make sure to standardize column names if required
+			- 
+
+			Returns
+			-------
+			None
+		"""
+		# file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
+		file_path = filedialog.askopenfilename()
 		if file_path:
 			try:
-				# Load CSV into DataFrame
-				self.data = pd.read_csv(file_path)
-				# Basic validation: ensure required columns exist
-				required = {'Date', 'Region'}
-				missing = required - set(self.data.columns)
-				if missing:
-					messagebox.showerror("Error", f"CSV missing required columns: {', '.join(missing)}")
-					return
-				# Parse dates safely and create Year/Month columns
-				self.data['Date'] = pd.to_datetime(self.data['Date'], errors='coerce')
-				if self.data['Date'].isna().all():
-					messagebox.showerror("Error", "Failed to parse any dates from the 'Date' column.")
-					return
-				self.data['Month'] = self.data['Date'].dt.month
-				self.data['Year'] = self.data['Date'].dt.year
+				self.data = cp.load_data_from_file(file_path)
+
+				# required = {'Date', 'date', 'Region', 'region', 'Death', 'death', 'Cured', 'cured', 'Discharged', 'discharged'}
+				# missing = required - set(self.data.columns)
+				# if missing:
+					# messagebox.showerror("Error", f"CSV missing required columns: {', '.join(missing)}")
+					# return
+
+				# self.data['Date'] = pd.to_datetime(self.data['Date'], errors='coerce')
+				# if self.data['Date'].isna().all():
+				# 	messagebox.showerror("Error", "Failed to parse any dates from the 'Date' column.")
+				# 	return
+				# self.data['Month'] = self.data['Date'].dt.month
+				# self.data['Year'] = self.data['Date'].dt.year
 				# Populate combobox options (guard against missing columns)
 				self.state_menu['values'] = sorted(self.data['Region'].dropna().unique())
 				# Normalize combobox values to strings to avoid float-like values (e.g. '1.0')
@@ -374,18 +412,19 @@ class MainWindow(tk.Tk):
 				self._update_graph()
 				messagebox.showinfo("Success", "Data loaded successfully!")
 			except Exception as e:
-				messagebox.showerror("Error", f"Failed to load file: {e}")
+				messagebox.showerror("Error", f"Failed to load file or parse the file : {e}")
 
 	def _update_graph(self):
-		"""Generate and embed a matplotlib Figure for the current selection.
+		"""
+			Generate and embed a matplotlib Figure for the current selection.
 
-		This method reads selection values (state/month/year/case/graph type),
-		calls ``analysis.trends.create_figure`` and embeds the returned Figure
-		inside the dashboard canvas. Errors are shown inline in the canvas.
+			This method reads selection values (state/month/year/case/graph type),
+			calls ``analysis.trends.create_figure`` and embeds the returned Figure
+			inside the dashboard canvas. Errors are shown inline in the canvas.
 
-		Returns
-		-------
-		None
+			Returns
+			-------
+			None
 		"""
 		for widget in self.graph_frame.winfo_children():
 			widget.destroy()
@@ -421,14 +460,15 @@ class MainWindow(tk.Tk):
 		self.current_figure = fig
 
 	def _download_graph(self):
-		"""Save the current figure to disk (PNG or PDF).
+		"""
+			Save the current figure to disk (PNG or PDF).
 
-		Opens a save dialog and uses ``Figure.savefig`` to write the selected
-		format. If no current figure is available a warning is shown.
+			Opens a save dialog and uses ``Figure.savefig`` to write the selected
+			format. If no current figure is available a warning is shown.
 
-		Returns
-		-------
-		None
+			Returns
+			-------
+			None
 		"""
 		if not hasattr(self, 'current_figure') or self.current_figure is None:
 			messagebox.showwarning("No Graph", "No graph to download.")
@@ -448,4 +488,3 @@ class MainWindow(tk.Tk):
 if __name__ == "__main__":
 	app = MainWindow()
 	app.mainloop()
-
